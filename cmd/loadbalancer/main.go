@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/cabasoah/Distributed-Job-Scheduler-with-Rate-Limiting/loadbalancer"
 )
@@ -13,7 +14,9 @@ import (
 //Load balancer routing to multple backend servers
 func main()  {
 	port := flag.String("port", "9090", "port for the load balancer to listen on")
-	backends := flag.String("backends", "http://localhost:8080,http://localhost:8081", "comma-seperated backend URLs")
+	backends := flag.String("backends", "http://localhost:8080,http://localhost:8081,http://localhost:8082", "comma-seperated backend URLs")
+	healthPath := flag.String("health-path", "/", "path to use for health checks")
+	healthPeriod := flag.Duration("health-period", 10*time.Second, "how often to health check backends")
 	flag.Parse()
 
 	//pool
@@ -28,13 +31,14 @@ func main()  {
 
 	log.Printf("Load balancer listening on :%s", *port)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
+	pool.StartHealthChecks(*healthPath, *healthPeriod)
 
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request, pool *loadbalancer.Pool)  {
 	backend := pool.NextBackend()
 	if backend == nil {
-		http.Error(w, "no backends available", http.StatusServiceUnavailable)
+		http.Error(w, "no healthy backends available", http.StatusServiceUnavailable)
 		return
 	}
 
