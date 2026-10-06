@@ -11,3 +11,5 @@ curl http://localhost:9090/   -  run repeatedly, watch it alternate
 
 # Testing the rate limiter
 go run ./cmd/ratelimiter --port 8083
+
+for i in $(seq 1 10); do curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8083/limited & done; wait
