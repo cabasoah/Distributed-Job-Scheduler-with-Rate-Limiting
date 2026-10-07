@@ -5,16 +5,29 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/cabasoah/Distributed-Job-Scheduler-with-Rate-Limiting/ratelimiter"
 )
 
 func main() {
 	port := flag.String("port", "8083", "port for the rate limiter API to listen on")
+	strategy := flag.String("strategy", "token-bucket", "token-bucket | fixed-window")
 	flag.Parse()
 
 	// limiter: capacity 10,1 token/sec
-	limiter := ratelimiter.NewTokenBucketLimiter(10, 1)
+	// switch statement to switch between bucket and window limiter
+	var limiter ratelimiter.Limiter
+
+	switch *strategy {
+	case "token-bucket":
+		limiter = ratelimiter.NewTokenBucketLimiter(10,1)
+	case "fixed-window":
+		limiter = ratelimiter.NewFixedWindowLimiter(60*time.Second, 60) //60 req/min
+	default:
+		log.Fatalf("Unkown Strategy: %s", *strategy)
+
+	}
 
 	http.HandleFunc("/unlimited", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Unlimited! Let's go!"))
