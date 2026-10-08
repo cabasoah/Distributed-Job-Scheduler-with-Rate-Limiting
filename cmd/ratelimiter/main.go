@@ -24,6 +24,8 @@ func main() {
 		limiter = ratelimiter.NewTokenBucketLimiter(10,1)
 	case "fixed-window":
 		limiter = ratelimiter.NewFixedWindowLimiter(60*time.Second, 60) //60 req/min
+	case "sliding-window-counter":
+		limiter = ratelimiter.NewSlidingWindowCounterLimiter(60*time.Second, 60)
 	default:
 		log.Fatalf("Unkown Strategy: %s", *strategy)
 
