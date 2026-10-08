@@ -12,4 +12,10 @@ curl http://localhost:9090/   -  run repeatedly, watch it alternate
 # Testing the rate limiter
 go run ./cmd/ratelimiter --strategy fixed-window --port 8083
 
+For redis: go run ./cmd/ratelimiter --port 8083 --strategy redis-sliding-window
+
 for i in $(seq 1 10); do curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8083/limited & done; wait
+
+# Docker COmpose with Redis
+go get github.com/redis/go-redis/v9
+docker-compose up -d

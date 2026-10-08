@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/cabasoah/Distributed-Job-Scheduler-with-Rate-Limiting/ratelimiter"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
 	port := flag.String("port", "8083", "port for the rate limiter API to listen on")
 	strategy := flag.String("strategy", "token-bucket", "token-bucket | fixed-window")
+	redisAddr := flag.String("redis-addr", "localhost:6379", "redis address")
 	flag.Parse()
 
 	// limiter: capacity 10,1 token/sec
@@ -26,6 +28,9 @@ func main() {
 		limiter = ratelimiter.NewFixedWindowLimiter(60*time.Second, 60) //60 req/min
 	case "sliding-window-counter":
 		limiter = ratelimiter.NewSlidingWindowCounterLimiter(60*time.Second, 60)
+	case "redis-sliding-window":
+		rdb := redis.NewClient(&redis.Options{Addr: *redisAddr})
+		limiter = ratelimiter.NewRedisSlidingWindowLimiter(rdb, 60*time.Second, 60)
 	default:
 		log.Fatalf("Unkown Strategy: %s", *strategy)
 
